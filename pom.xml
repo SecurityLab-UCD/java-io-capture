@@ -4,8 +4,11 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.example</groupId>
   <artifactId>java-io-capture</artifactId>
-  <packaging>jar</packaging>
-  <version>1.0-SNAPSHOT</version>
+  <packaging>pom</packaging>
+    <modules>
+        <module>example</module>
+    </modules>
+    <version>1.0-SNAPSHOT</version>
   <name>byte-buddy-agent</name>
   <url>http://maven.apache.org</url>
   <dependencies>
