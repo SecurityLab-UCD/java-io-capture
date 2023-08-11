@@ -1,4 +1,4 @@
-package com.example;
+package com.agent;
 
 import net.bytebuddy.agent.builder.AgentBuilder;
 import net.bytebuddy.asm.Advice;
