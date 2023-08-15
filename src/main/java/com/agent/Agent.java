@@ -20,19 +20,28 @@ public class Agent {
 
     public static class Interceptor {
         @Advice.OnMethodEnter
-        static void onEnter(@Advice.Origin String method, @Advice.AllArguments Object[] args) {
-            System.out.println("Entering method: " + method);
-            System.out.println("Arguments: ");
+        public static void onEnter(@Advice.Origin String method, @Advice.AllArguments Object[] args) {
+            System.err.printf("======= Entering method: %s =======>\n", method);
+            System.err.println("Arguments: ");
             for (Object arg : args) {
-                System.out.println(arg);
+                // temporary reporting format
+                // value: type
+                System.err.println(arg + ": " + arg.getClass());
             }
+            System.err.println("<======================================");
         }
 
         @Advice.OnMethodExit
-        static void onExit(@Advice.Origin String method, @Advice.Return(readOnly = false) Object returned) {
-            System.out.println("Exiting method: " + method);
-            System.out.println("Returned value: " + returned);
+        static void onExit(@Advice.Origin String method) {
+            // !
+            // fix: if this parameter is added, whole instrumentation will not work
+            // public static void onExit(@Advice.Origin String method,
+            // @Advice.Return(readOnly = true) boolean returned) {
+            System.err.printf("------ Exiting method: %s ------->\n", method);
+            System.err.println("Returned value: ");
+            // System.err.println(rnt + ": " + rnt.getClass());
+            System.err.println("<--------------------------------------");
         }
-    }
 
+    }
 }
