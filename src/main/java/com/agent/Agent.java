@@ -10,8 +10,11 @@ import net.bytebuddy.implementation.bind.annotation.SuperCall;
 import net.bytebuddy.implementation.bind.annotation.This;
 
 import java.lang.reflect.Method;
+import java.util.HashMap;
+import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.lang.instrument.Instrumentation;
+import java.util.regex.Pattern;
 
 public class Agent {
     public static void premain(String agentArgs, Instrumentation inst) {
@@ -28,6 +31,9 @@ public class Agent {
     // 2. handle exceptions
     // 3. fix reporting format
     public static class Interceptor {
+
+        private static int callCount = 0;
+
         @RuntimeType
         public static Object intercept(
                 @This(optional = true) Object origin,
@@ -35,6 +41,17 @@ public class Agent {
                 @SuperCall Callable<?> callable,
                 @AllArguments Object[] args) throws Exception {
 
+            // dump report table at program exit
+            if (method.getName().equals("main")) {
+                Runtime.getRuntime().addShutdownHook(new Thread() {
+                    public void run() {
+                        System.err.println("atexit, #function called: " + callCount);
+                    }
+                });
+                return callable.call();
+            }
+
+            callCount += 1;
             // 1. report input arguments
             System.err.printf("======= Entering method: %s =======>\n", method);
             System.err.println("Arguments: ");
