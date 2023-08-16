@@ -11,6 +11,6 @@ mvn clean package
 ## Example
 
 ```sh
-make
-java -javaagent:./target/java-io-capture-1.0-SNAPSHOT.jar Main
+cd example; make; cd ..
+java -javaagent:./target/java-io-capture-1.0-SNAPSHOT.jar -jar example/example.jar
 ```
