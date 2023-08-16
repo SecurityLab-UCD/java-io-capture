@@ -10,17 +10,17 @@ import net.bytebuddy.implementation.bind.annotation.SuperCall;
 import net.bytebuddy.implementation.bind.annotation.This;
 
 import java.lang.reflect.Method;
-import java.util.HashMap;
-import java.util.Objects;
+import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.concurrent.Callable;
 import java.lang.instrument.Instrumentation;
-import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class Agent {
     public static void premain(String agentArgs, Instrumentation inst) {
         new AgentBuilder.Default()
                 .type(ElementMatchers.any())
-                .transform((builder, typeDescription, classLoader, module) -> builder
+                .transform((builder, typeDescription, classLoader, module, domain) -> builder
                         .method(ElementMatchers.any())
                         .intercept(MethodDelegation.to(Interceptor.class)))
                 .installOn(inst);
@@ -32,7 +32,7 @@ public class Agent {
     // 3. fix reporting format
     public static class Interceptor {
 
-        private static int callCount = 0;
+        private static ReportTable report_table = new ReportTable(10);
 
         @RuntimeType
         public static Object intercept(
@@ -45,37 +45,34 @@ public class Agent {
             if (method.getName().equals("main")) {
                 Runtime.getRuntime().addShutdownHook(new Thread() {
                     public void run() {
-                        System.err.println("atexit, #function called: " + callCount);
+                        System.err.println("report table:");
+                        System.err.println(report_table.toString());
                     }
                 });
                 return callable.call();
             }
 
-            callCount += 1;
-            // 1. report input arguments
-            System.err.printf("======= Entering method: %s =======>\n", method);
-            System.err.println("Arguments: ");
-            for (Object arg : args) {
-                // temporary reporting format
-                // value: type
-                System.err.println(arg + ": " + arg.getClass());
-            }
-            System.err.println("<======================================");
+            ArrayList<String> inputs = new ArrayList<String>();
+            ArrayList<String> outputs = new ArrayList<String>();
 
+            // 1. report input arguments
+            inputs.addAll(
+                    Arrays.stream(args)
+                            .map(Object::toString)
+                            .collect(Collectors.toCollection(ArrayList::new)));
             // 2. call the original method
             Object rnt = callable.call();
 
             // 3. report return value
-            System.err.printf("------ Exiting method: %s ------->\n", method);
-            System.err.println("Returned value: ");
             if (rnt == null) {
-                System.err.println("null");
+                outputs.add("");
             } else {
-                System.err.println(rnt + ": " + rnt.getClass());
+                outputs.add(rnt.toString());
             }
-            System.err.println("<--------------------------------------");
 
             // 4. return the original return value
+            // fixme: report not working
+            // report_table.report(method.getName(), new IOPair(inputs, outputs));
             return rnt;
         }
     }
