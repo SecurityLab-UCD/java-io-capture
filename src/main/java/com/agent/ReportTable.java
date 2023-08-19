@@ -4,7 +4,7 @@ import java.util.HashMap;
 
 public class ReportTable {
     private HashMap<String, ExecHashMap> table;
-    private  int max_outputs_for_inputs;
+    private int max_outputs_for_inputs;
 
     public ReportTable() {
         table = new HashMap<>();
@@ -18,8 +18,9 @@ public class ReportTable {
 
     /**
      * Report the inputs and outputs of a function execution to report_table
+     * 
      * @param func_name name of the function being reported
-     * @param io a pair of inputs and outputs of the function execution
+     * @param io        a pair of inputs and outputs of the function execution
      */
     public void report(final String func_name, IOPair io) {
         if (table.get(func_name) == null) {

@@ -7,7 +7,8 @@ import java.util.HashSet;
 public class ExecHashMap {
 
     // works as `typedef`, which is not in Java
-    public static class IOVectorSet extends HashSet<ArrayList<String>> {}
+    public static class IOVectorSet extends HashSet<ArrayList<String>> {
+    }
 
     private HashMap<ArrayList<String>, IOVectorSet> map;
 
@@ -25,6 +26,7 @@ public class ExecHashMap {
 
     /**
      * Inset a pair of inputs and outputs to the hash map
+     * 
      * @param io a pair of inputs (ArrayList) and outputs (ArrayList)
      */
     public void insert(IOPair io) {
@@ -34,7 +36,12 @@ public class ExecHashMap {
         IOVectorSet outputSet = map.get(inputs);
         if (outputSet == null) {
             IOVectorSet newOutputSet = new IOVectorSet();
-            newOutputSet.add(outputs);map.put(inputs,newOutputSet);}else if(map.get(inputs).size()<value_capacity){map.get(inputs).add(outputs);}}
+            newOutputSet.add(outputs);
+            map.put(inputs, newOutputSet);
+        } else if (map.get(inputs).size() < value_capacity) {
+            map.get(inputs).add(outputs);
+        }
+    }
 
     /**
      * Get the list of outputs of a given inputs list

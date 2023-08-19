@@ -1,27 +1,25 @@
 package com.agent;
 
 import net.bytebuddy.agent.builder.AgentBuilder;
-import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.implementation.MethodDelegation;
-import net.bytebuddy.implementation.bind.annotation.AllArguments;
-import net.bytebuddy.implementation.bind.annotation.Origin;
-import net.bytebuddy.implementation.bind.annotation.RuntimeType;
-import net.bytebuddy.implementation.bind.annotation.SuperCall;
-import net.bytebuddy.implementation.bind.annotation.This;
+import net.bytebuddy.implementation.bind.annotation.*;
 
-import java.lang.reflect.Method;
-import java.util.Arrays;
-import java.util.ArrayList;
-import java.util.concurrent.Callable;
 import java.lang.instrument.Instrumentation;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
+
+import static net.bytebuddy.matcher.ElementMatchers.*;
 
 public class Agent {
     public static void premain(String agentArgs, Instrumentation inst) {
         new AgentBuilder.Default()
-                .type(ElementMatchers.any())
+                // ignore functions in this com.agent package to avoid circular reference
+                .type(not(nameStartsWith("com.agent")))
                 .transform((builder, typeDescription, classLoader, module, domain) -> builder
-                        .method(ElementMatchers.any())
+                        .method(any())
                         .intercept(MethodDelegation.to(Interceptor.class)))
                 .installOn(inst);
     }
@@ -55,24 +53,20 @@ public class Agent {
             ArrayList<String> inputs = new ArrayList<String>();
             ArrayList<String> outputs = new ArrayList<String>();
 
-            // 1. report input arguments
+            // 1. collect function inputs
             inputs.addAll(
                     Arrays.stream(args)
                             .map(Object::toString)
                             .collect(Collectors.toCollection(ArrayList::new)));
-            // 2. call the original method
-            Object rnt = callable.call();
 
-            // 3. report return value
-            if (rnt == null) {
-                outputs.add("");
-            } else {
-                outputs.add(rnt.toString());
-            }
+            // 2. call the original method and collect outputs
+            Object rnt = callable.call();
+            outputs.add(rnt == null ? "" : rnt.toString());
+
+            // 3. report collected inputs and outputs to report table
+            report_table.report(method.getName(), new IOPair(inputs, outputs));
 
             // 4. return the original return value
-            // fixme: report not working
-            // report_table.report(method.getName(), new IOPair(inputs, outputs));
             return rnt;
         }
     }
