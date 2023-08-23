@@ -1,24 +1,25 @@
 package com.agent;
 
 import net.bytebuddy.agent.builder.AgentBuilder;
-import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.implementation.MethodDelegation;
-import net.bytebuddy.implementation.bind.annotation.AllArguments;
-import net.bytebuddy.implementation.bind.annotation.Origin;
-import net.bytebuddy.implementation.bind.annotation.RuntimeType;
-import net.bytebuddy.implementation.bind.annotation.SuperCall;
-import net.bytebuddy.implementation.bind.annotation.This;
+import net.bytebuddy.implementation.bind.annotation.*;
 
-import java.lang.reflect.Method;
-import java.util.concurrent.Callable;
 import java.lang.instrument.Instrumentation;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.concurrent.Callable;
+import java.util.stream.Collectors;
+
+import static net.bytebuddy.matcher.ElementMatchers.*;
 
 public class Agent {
     public static void premain(String agentArgs, Instrumentation inst) {
         new AgentBuilder.Default()
-                .type(ElementMatchers.any())
-                .transform((builder, typeDescription, classLoader, module) -> builder
-                        .method(ElementMatchers.any())
+                // ignore functions in this com.agent package to avoid circular reference
+                .type(not(nameStartsWith("com.agent")))
+                .transform((builder, typeDescription, classLoader, module, domain) -> builder
+                        .method(any())
                         .intercept(MethodDelegation.to(Interceptor.class)))
                 .installOn(inst);
     }
@@ -28,6 +29,9 @@ public class Agent {
     // 2. handle exceptions
     // 3. fix reporting format
     public static class Interceptor {
+
+        private static ReportTable report_table = new ReportTable(10);
+
         @RuntimeType
         public static Object intercept(
                 @This(optional = true) Object origin,
@@ -35,28 +39,32 @@ public class Agent {
                 @SuperCall Callable<?> callable,
                 @AllArguments Object[] args) throws Exception {
 
-            // 1. report input arguments
-            System.err.printf("======= Entering method: %s =======>\n", method);
-            System.err.println("Arguments: ");
-            for (Object arg : args) {
-                // temporary reporting format
-                // value: type
-                System.err.println(arg + ": " + arg.getClass());
+            // dump report table at program exit
+            if (method.getName().equals("main")) {
+                Runtime.getRuntime().addShutdownHook(new Thread() {
+                    public void run() {
+                        System.err.println("report table:");
+                        System.err.println(report_table.toString());
+                    }
+                });
+                return callable.call();
             }
-            System.err.println("<======================================");
 
-            // 2. call the original method
+            ArrayList<String> inputs = new ArrayList<String>();
+            ArrayList<String> outputs = new ArrayList<String>();
+
+            // 1. collect function inputs
+            inputs.addAll(
+                    Arrays.stream(args)
+                            .map(Object::toString)
+                            .collect(Collectors.toCollection(ArrayList::new)));
+
+            // 2. call the original method and collect outputs
             Object rnt = callable.call();
+            outputs.add(rnt == null ? "" : rnt.toString());
 
-            // 3. report return value
-            System.err.printf("------ Exiting method: %s ------->\n", method);
-            System.err.println("Returned value: ");
-            if (rnt == null) {
-                System.err.println("null");
-            } else {
-                System.err.println(rnt + ": " + rnt.getClass());
-            }
-            System.err.println("<--------------------------------------");
+            // 3. report collected inputs and outputs to report table
+            report_table.report(method.getName(), new IOPair(inputs, outputs));
 
             // 4. return the original return value
             return rnt;
