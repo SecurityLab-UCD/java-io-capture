@@ -4,24 +4,35 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 
+import java.util.concurrent.ConcurrentHashMap;
+
 public class ExecHashMap {
 
     // works as `typedef`, which is not in Java
     public static class IOVectorSet extends HashSet<ArrayList<String>> {
     }
 
-    private HashMap<ArrayList<String>, IOVectorSet> map;
+    // private HashMap<ArrayList<String>, IOVectorSet> map;
+    private ConcurrentHashMap<ArrayList<String>, IOVectorSet> map;
 
     private int value_capacity;
 
     public ExecHashMap() {
-        map = new HashMap<ArrayList<String>, IOVectorSet>();
+        // map = new HashMap<ArrayList<String>, IOVectorSet>();
+        map = new ConcurrentHashMap<ArrayList<String>, IOVectorSet>();
         value_capacity = 0;
     }
 
     public ExecHashMap(int cap) {
-        map = new HashMap<ArrayList<String>, IOVectorSet>();
+        // map = new HashMap<ArrayList<String>, IOVectorSet>();
+        map = new ConcurrentHashMap<ArrayList<String>, IOVectorSet>();
         value_capacity = cap;
+    }
+
+    // Copy constructor
+    public ExecHashMap(ExecHashMap exec_hash_map) {
+        this.map = new ConcurrentHashMap<ArrayList<String>, IOVectorSet>(exec_hash_map.map);
+        this.value_capacity = exec_hash_map.value_capacity;
     }
 
     /**
@@ -60,4 +71,31 @@ public class ExecHashMap {
     public String toString() {
         return map.toString();
     }
+
+    // public JSONObject toJson() {
+    //     JSONObject json_object = new JSONObject();
+    //     for (ArrayList<String> key : map.keySet()) {
+    //         String input = Arrays.deepToString(key.toArray());
+    //         // IOVectorSet outputs = map.get(key);
+    //         // json_object.put(input, "new JSONArray(outputs)");
+    //         json_object.put("test", "test");
+    //     }
+    //     System.out.println(json_object.toString());
+    //     return json_object;
+    // }
+
+    // Try returning the ExecHashMap in list form to be serialized in ReportTable
+    public ArrayList<ArrayList<Object>> toJsonValue() {
+        ArrayList<ArrayList<Object>> io_list = new ArrayList<>();
+        for (ArrayList<String> input : map.keySet()) {
+            IOVectorSet outputs = map.get(input);
+            // Create a list for each element in the overall list
+            ArrayList<Object> element = new ArrayList<>();
+            element.add(input);
+            element.add(new ArrayList<ArrayList<String>>(outputs));
+            io_list.add(element);
+        }
+        return io_list;
+    }
 }
+

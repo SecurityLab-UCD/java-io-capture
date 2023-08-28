@@ -10,6 +10,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
+// Packages to write JSON dump, might not need in this file
+import java.io.FileWriter;
+import java.io.IOException;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
 
@@ -45,8 +48,35 @@ public class Agent {
                     public void run() {
                         System.err.println("report table:");
                         System.err.println(report_table.toString());
+                        try {
+                            // ReportTable localCopy = new ReportTable(report_table);
+                            // localCopy.toJson();
+                            FileWriter file = new FileWriter("./dump/temp.json");
+                            report_table.toJson();
+                            //file.write(report_table.toJson().toString());
+                            file.close();
+                        } catch (IOException e) {
+                            System.err.println("Error opening file!");
+                            e.printStackTrace();
+                        }
                     }
                 });
+
+                // Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                //     synchronized (report_table) {
+                //         System.err.println("report table:");
+                //         System.err.println(report_table.toString());
+                //         try {
+                //             FileWriter file = new FileWriter("./dump/temp.json");
+                //             // Call toJson() within synchronized block
+                //             file.write(report_table.toJson().toString());
+                //             file.close();
+                //         } catch (IOException e) {
+                //             System.err.println("Error opening file!");
+                //             e.printStackTrace();
+                //         }
+                //     }
+                // }));
                 return callable.call();
             }
 
@@ -71,3 +101,4 @@ public class Agent {
         }
     }
 }
+
