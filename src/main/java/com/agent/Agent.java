@@ -34,6 +34,7 @@ public class Agent {
     public static class Interceptor {
 
         private static ReportTable report_table = new ReportTable(10);
+        private static int dump_count = 0;
 
         @RuntimeType
         public static Object intercept(
@@ -44,39 +45,41 @@ public class Agent {
 
             // dump report table at program exit
             if (method.getName().equals("main")) {
-                Runtime.getRuntime().addShutdownHook(new Thread() {
-                    public void run() {
-                        System.err.println("report table:");
-                        System.err.println(report_table.toString());
-                        try {
-                            // ReportTable localCopy = new ReportTable(report_table);
-                            // localCopy.toJson();
-                            FileWriter file = new FileWriter("./dump/temp.json");
-                            report_table.toJson();
-                            //file.write(report_table.toJson().toString());
-                            file.close();
-                        } catch (IOException e) {
-                            System.err.println("Error opening file!");
-                            e.printStackTrace();
-                        }
-                    }
-                });
-
-                // Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-                //     synchronized (report_table) {
+                // Runtime.getRuntime().addShutdownHook(new Thread() {
+                //     public void run() {
+                //         System.out.println(dump_count);
+                //         if (dump_count++ > 0) { return; }
                 //         System.err.println("report table:");
                 //         System.err.println(report_table.toString());
                 //         try {
+                //             // ReportTable localCopy = new ReportTable(report_table);
+                //             // localCopy.toJson();
                 //             FileWriter file = new FileWriter("./dump/temp.json");
-                //             // Call toJson() within synchronized block
-                //             file.write(report_table.toJson().toString());
+                //             report_table.toJson();
+                //             //file.write(report_table.toJson().toString());
                 //             file.close();
                 //         } catch (IOException e) {
                 //             System.err.println("Error opening file!");
                 //             e.printStackTrace();
                 //         }
                 //     }
-                // }));
+                // });
+
+                Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                    synchronized (report_table) {
+                        System.err.println("report table:");
+                        System.err.println(report_table.toString());
+                        try {
+                            FileWriter file = new FileWriter("./dump/temp.json");
+                            // Call toJson() within synchronized block
+                            file.write(report_table.toJson().toString());
+                            file.close();
+                        } catch (IOException e) {
+                            System.err.println("Error opening file!");
+                            e.printStackTrace();
+                        }
+                    }
+                }));
                 return callable.call();
             }
 

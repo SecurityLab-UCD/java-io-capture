@@ -30,17 +30,17 @@ public class ExecHashMap {
     }
 
     // Copy constructor
-    public ExecHashMap(ExecHashMap exec_hash_map) {
-        this.map = new ConcurrentHashMap<ArrayList<String>, IOVectorSet>(exec_hash_map.map);
-        this.value_capacity = exec_hash_map.value_capacity;
-    }
+    // public ExecHashMap(ExecHashMap exec_hash_map) {
+    //     this.map = new ConcurrentHashMap<ArrayList<String>, IOVectorSet>(exec_hash_map.map);
+    //     this.value_capacity = exec_hash_map.value_capacity;
+    // }
 
     /**
      * Inset a pair of inputs and outputs to the hash map
      * 
      * @param io a pair of inputs (ArrayList) and outputs (ArrayList)
      */
-    public void insert(IOPair io) {
+    public synchronized void insert(IOPair io) {
         ArrayList<String> inputs = io.inputs;
         ArrayList<String> outputs = io.outputs;
 

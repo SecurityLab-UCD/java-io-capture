@@ -30,7 +30,7 @@ public class ReportTable {
      * @param func_name name of the function being reported
      * @param io        a pair of inputs and outputs of the function execution
      */
-    public void report(final String func_name, IOPair io) {
+    public synchronized void report(final String func_name, IOPair io) {
         // if (table.get(func_name) == null) {
         if (table.get(func_name) == null) {
             ExecHashMap map = new ExecHashMap(max_outputs_for_inputs);
@@ -53,11 +53,7 @@ public class ReportTable {
         for (String file_and_func_name : table.keySet()) {
             JSONObject json_object = new JSONObject();
             ExecHashMap exec_hash_map = table.get(file_and_func_name);
-            try {
-                json_object.put(file_and_func_name, exec_hash_map.toJsonValue());
-            } catch (NullPointerException e) {
-                System.err.println(exec_hash_map.toJsonValue());
-            }
+            json_object.put(file_and_func_name, exec_hash_map.toJsonValue());
             json_list.add(json_object);
         }
         return json_list;
