@@ -34,7 +34,7 @@ public class Agent {
     public static class Interceptor {
 
         private static ReportTable report_table = new ReportTable(10);
-        private static int dump_count = 0;
+        private static ThreadLocal<Integer> dump_count = ThreadLocal.withInitial(() -> 0);
 
         @RuntimeType
         public static Object intercept(
@@ -67,6 +67,7 @@ public class Agent {
 
                 Runtime.getRuntime().addShutdownHook(new Thread(() -> {
                     synchronized (report_table) {
+                        if (dump_count.get() > 0) { return; }
                         System.err.println("report table:");
                         System.err.println(report_table.toString());
                         try {
@@ -78,6 +79,7 @@ public class Agent {
                             System.err.println("Error opening file!");
                             e.printStackTrace();
                         }
+                        dump_count.set(dump_count.get() + 1);
                     }
                 }));
                 return callable.call();
